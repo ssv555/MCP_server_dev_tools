@@ -6,8 +6,24 @@ const robot = require('robotjs');
 const { McpServer, ResourceTemplate } = require("@modelcontextprotocol/sdk/server/mcp.js");
 const { StdioServerTransport } = require("@modelcontextprotocol/sdk/server/stdio.js");
 const { z } = require("zod");
+const path = require('path');
+const fs = require('fs');
 
 const packageJson = require('./package.json');
+
+// Helper to generate filename
+function generateFilename(name) {
+    const now = new Date();
+    const pad = (n, len=2) => n.toString().padStart(len, '0');
+    const yyyy = now.getFullYear();
+    const MM = pad(now.getMonth() + 1);
+    const dd = pad(now.getDate());
+    const hh = pad(now.getHours());
+    const mm = pad(now.getMinutes());
+    const ss = pad(now.getSeconds());
+    const zzz = pad(now.getMilliseconds(), 3);
+    return `${yyyy}.${MM}.${dd}_${hh}.${mm}.${ss}.${zzz}_capture_${name}.png`;
+}
 
 // Create server instance
 const server = new McpServer(
@@ -30,8 +46,51 @@ const screenshots = {};
 const capabilityImplementations = {
   screen_capture: async (params = {}) => {
     try {
-      // Take a screenshot
-      const img = await screenshot();
+      const { screen, savePath } = params;
+      let img;
+      let captureName = "screen";
+
+      if (screen !== undefined) {
+                let displays = await screenshot.listDisplays();
+                // Sort displays from left to right based on their 'left' coordinate
+                displays.sort((a, b) => a.left - b.left);
+                
+                const displayIdx = parseInt(screen);
+                if (displayIdx >= 0 && displayIdx < displays.length) {
+                  img = await screenshot({ screen: displays[displayIdx].id });
+                  captureName = `monitor_${displayIdx}`;
+                } else {
+                  throw new Error(`Screen index ${displayIdx} out of range (found ${displays.length} displays)`);
+                }
+      } else {
+        // Default behavior (usually primary screen or all screens)
+        img = await screenshot();
+        captureName = "all_screens";
+      }
+
+      // Determine save path
+      let finalSavePath = "";
+      if (savePath) {
+        // Check if savePath is a directory
+        if (fs.existsSync(savePath) && fs.statSync(savePath).isDirectory()) {
+            finalSavePath = path.join(savePath, generateFilename(captureName));
+        } else {
+            // Assume it's a full file path
+            finalSavePath = savePath;
+        }
+      } else {
+        // Default to .tmp
+        const tmpDir = path.join(__dirname, '.tmp');
+        if (!fs.existsSync(tmpDir)) {
+            fs.mkdirSync(tmpDir);
+        }
+        finalSavePath = path.join(tmpDir, generateFilename(captureName));
+      }
+
+      // Save file
+      fs.writeFileSync(finalSavePath, img);
+      const saveMessage = `Saved to ${finalSavePath}.`;
+
       const imgInBase64 = img.toString('base64');
       const timestamp = Math.floor(Date.now() / 1000);
       const screenshotKey = `screenshot-${timestamp}`;
@@ -43,7 +102,7 @@ const capabilityImplementations = {
         content: [
           {
             type: "text",
-            text: `Screenshot ${screenshotKey} taken.`,
+            text: `Screenshot ${screenshotKey} taken. ${saveMessage}`,
           },
           {
             type: "image",
@@ -141,8 +200,10 @@ function toMcpResponse(obj) {
 server.tool("get_screen_size", "Gets the screen dimensions", {},
   async () => toMcpResponse(capabilityImplementations.get_screen_size()));
 
-server.tool("screen_capture", "Captures the current screen content", {},
-  async () => capabilityImplementations.screen_capture());
+server.tool("screen_capture", "Captures the current screen content", {
+  screen: z.number().optional().describe("Screen index to capture (0 for primary, 1 for secondary, etc.)"),
+  savePath: z.string().optional().describe("Absolute path to save the screenshot file (e.g. 'C:\\Temp\\screen.png')")
+}, async (params) => capabilityImplementations.screen_capture(params));
 
 server.tool("keyboard_press", "Presses a keyboard key or key combination", {
   key: z.string().describe("Key to press (e.g., 'enter', 'a', 'control')"),

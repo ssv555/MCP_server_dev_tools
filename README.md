@@ -1,12 +1,29 @@
 # MCP Desktop Automation
 
-A Model Context Protocol server that provides desktop automation capabilities using RobotJS and screenshot capabilities. This server enables LLMs to control mouse movements, keyboard inputs, and capture screenshots of the desktop environment.
+A Model Context Protocol server and toolkit for desktop automation. It provides two main layers of functionality:
+1. **Node.js MCP Server**: General purpose tools for screen capture, mouse/keyboard control.
+2. **PowerShell Scripts**: specialized, robust automation for Telegram Desktop (handling encoding, window focus, etc.).
 
-## Configuration to use Desktop Automation Server
+## Configuration
 
-Here's how to configure Claude Desktop to use the MCP Desktop Automation server:
+Here's how to configure Claude Desktop to use this MCP server.
 
-### NPX
+### Local Development (Recommended)
+
+Since you are running this from source:
+
+```json
+{
+  "mcpServers": {
+    "desktop-automation": {
+      "command": "node",
+      "args": ["D:\\Data\\Documents\\Programming\\Projects\\MCP\\mcp-desktop-automation\\server.js"]
+    }
+  }
+}
+```
+
+### NPX (If published)
 
 ```json
 {
@@ -22,79 +39,87 @@ Here's how to configure Claude Desktop to use the MCP Desktop Automation server:
 ### Permissions
 
 This server requires system-level permissions to:
-
 * Capture screenshots of your screen
 * Control mouse movement and clicks
 * Simulate keyboard input
 
-When first running Claude Desktop with this server, you may need to grant these permissions in your operating system's security settings.
+## Telegram Automation (PowerShell)
 
-## Limitations
+The core automation logic for Telegram resides in the `scripts/` directory. These are optimized for Windows/PowerShell execution.
 
-While this server works with various MCP clients, it has been primarily tested with Claude Desktop.
+### 1. Send Message to Current Chat (`send_telegram_v7.ps1`)
 
-**Important**: The current implementation has a 1MB response size limit. For screen captures, this means:
-* High-resolution screenshots may exceed this limit and fail
-* Testing has shown 800x600 resolution works reliably
-* Consider reducing screen resolution or capturing specific screen areas if you encounter issues
+Sends a text message to the currently open chat in Telegram.
 
-## Requirements
+**Usage:**
 
-- Node.js (>=14.x)
+```powershell
+.\scripts\send_telegram_v7.ps1 -Message "Your Message Here"
+```
 
-## Components
+**For Non-ASCII Characters (Cyrillic, Emojis):**
+**CRITICAL**: To avoid encoding issues in the shell, encode your message in Base64 (UTF-8) and use the `-Base64` switch.
 
-### Tools
+```powershell
+# Example: Sending "Привет 🌍"
+# Base64 for "Привет 🌍" is "0J/RgNC40LLQtdGCIPCfjI0="
+.\scripts\send_telegram_v7.ps1 -Message "0J/RgNC40LLQtdGCIPCfjI0=" -Base64
+```
 
-- **get_screen_size**
-  - Gets the screen dimensions
-  - No input parameters required
+### 2. Search Contact and Send Message (`send_telegram_search_send.ps1`)
 
-- **screen_capture**
-  - Captures the current screen content
-  - No input parameters required
+Searches for a user/chat, opens it, and sends a message.
 
-- **keyboard_press**
-  - Presses a keyboard key or key combination
-  - Inputs:
-    - `key` (string, required): Key to press (e.g., 'enter', 'a', 'control')
-    - `modifiers` (array of strings, optional): Modifier keys to hold while pressing the key. Possible values: "control", "shift", "alt", "command"
+**Usage:**
 
-- **keyboard_type**
-  - Types text at the current cursor position
-  - Input: `text` (string, required): Text to type
+```powershell
+.\scripts\send_telegram_search_send.ps1 -SearchTerm "John Doe" -Message "Hello"
+```
 
-- **mouse_click**
-  - Performs a mouse click
-  - Inputs:
-    - `button` (string, optional, default: "left"): Mouse button to click. Possible values: "left", "right", "middle"
-    - `double` (boolean, optional, default: false): Whether to perform a double click
+**With Base64 (Recommended for complexity):**
 
-- **mouse_move**
-  - Moves the mouse to specified coordinates
-  - Inputs:
-    - `x` (number, required): X coordinate
-    - `y` (number, required): Y coordinate
+```powershell
+.\scripts\send_telegram_search_send.ps1 -SearchTerm "Vladimir" -Message "Base64EncodedString..." -Base64
+```
 
-### Resources
+**Process Flow:**
+1. Focuses Telegram.
+2. Clicks the "Search" bar (top left).
+3. Types the `-SearchTerm`.
+4. Clicks the first result.
+5. Clicks the message input field.
+6. Pastes and sends the `-Message`.
+7. Saves a screenshot to `.tmp/` for verification.
 
-The server provides access to screenshots:
+## Node.js Server Components
 
-1. **Screenshot List** (`screenshot://list`)
-   - Lists all available screenshots by name
+The `server.js` provides the following tools for general automation:
 
-2. **Screenshot Content** (`screenshot://{id}`)
-   - PNG images of captured screenshots
-   - Accessible via the screenshot ID (timestamp-based naming)
+- **screen_capture**: Captures the current screen content.
+- **keyboard_press**: Presses a keyboard key (e.g., 'enter', 'a', 'control').
+- **keyboard_type**: Types text at the current cursor position.
+- **mouse_click**: Performs a mouse click (left/right/middle, double).
+- **mouse_move**: Moves the mouse to specified coordinates.
+- **get_screen_size**: Gets the screen dimensions.
 
-## Key Features
+## Prerequisites
 
-- Desktop mouse control
-- Keyboard input simulation
-- Screen size detection
-- Screenshot capabilities
-- Simple JSON response format
+- **OS**: Windows (PowerShell 7+ recommended, but 5.1 works)
+- **Application**: Telegram Desktop installed and logged in.
+- **Node.js**: (>=14.x)
+
+## Project Structure
+
+- `scripts/`: Contains the PowerShell automation scripts.
+- `.tmp/`: Stores temporary files, primarily verification screenshots.
+- `server.js`: Main MCP server implementation.
+
+## MCP Agent Instructions
+
+1. **Always use Base64** for message content if it contains anything other than simple English ASCII. This guarantees that emojis and Russian text are transmitted correctly.
+2. **Check the Exit Code**: If the script returns `0`, it ran successfully.
+3. **Verify via Screenshot**: The scripts output the path to a screenshot (e.g., `.tmp/2025...capture.png`). Read this file or listing the directory to confirm the visual state if needed.
 
 ## License
 
-This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
+MIT

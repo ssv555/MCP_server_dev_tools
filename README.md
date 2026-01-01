@@ -16,7 +16,7 @@ Since you are running this from source:
 {
   "mcpServers": {
     "desktop-automation": {
-      "command": "node",
+      "command": "bun",
       "args": ["D:\\Data\\Documents\\Programming\\Projects\\MCP\\mcp-desktop-automation\\server.js"]
     }
   }

@@ -111,7 +111,7 @@ The `server.js` provides the following tools for general automation:
 ## Project Structure
 
 - `scripts/`: Contains the PowerShell automation scripts.
-- `.tmp/`: Stores temporary files, primarily verification screenshots.
+- `.tmp/`: Stores temporary files, primarily verification screenshots. Set `MCP_SCREENSHOT_DIR` to save screenshots taken without an explicit path somewhere else; the directory is created if missing.
 - `server.js`: Main MCP server implementation.
 
 ## MCP Agent Instructions

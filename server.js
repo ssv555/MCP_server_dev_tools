@@ -11,6 +11,10 @@ const fs = require('fs');
 
 const packageJson = require('./package.json');
 
+// Ensure stdout is only used for JSON-RPC
+const originalConsoleLog = console.log;
+console.log = console.error;
+
 // Helper to generate filename
 function generateFilename(name) {
     const now = new Date();
@@ -78,13 +82,18 @@ const capabilityImplementations = {
             // Assume it's a full file path
             finalSavePath = savePath;
         }
-      } else {
-        // Default to .tmp
-        const tmpDir = path.join(__dirname, '.tmp');
-        if (!fs.existsSync(tmpDir)) {
-            fs.mkdirSync(tmpDir);
+      } else { // Default behavior
+        let targetDir;
+        if (process.env.MCP_SCREENSHOT_DIR) {
+            targetDir = process.env.MCP_SCREENSHOT_DIR;
+        } else {
+            targetDir = path.join(__dirname, '.tmp');
         }
-        finalSavePath = path.join(tmpDir, generateFilename(captureName));
+
+        if (!fs.existsSync(targetDir)) {
+            fs.mkdirSync(targetDir, { recursive: true });
+        }
+        finalSavePath = path.join(targetDir, generateFilename(captureName));
       }
 
       // Save file

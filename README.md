@@ -10,18 +10,20 @@ Here's how to configure Claude Desktop to use this MCP server.
 
 ### Local Development (Recommended)
 
-Since you are running this from source:
+Since you are running this from source (the checkout was moved from usa-ubuntu, decommissioned 2026-10-13, to usa-windows):
 
 ```json
 {
   "mcpServers": {
     "desktop-automation": {
       "command": "bun",
-      "args": ["D:\\Data\\Documents\\Programming\\Projects\\MCP\\mcp-desktop-automation\\server.js"]
+      "args": ["C:\\Shared\\Projects\\MCP\\mcp-desktop-automation\\server.js"]
     }
   }
 }
 ```
+
+On usa-windows `bun install` fails at the native `robotjs@0.6.0` (no Python / Visual Studio C++ Build Tools, no prebuilt binary), and `bun server.js` then stops with `Cannot find module './build/Release/robotjs.node'` (checked 2026-10-07). Install the build tools or replace `robotjs` before using the server there.
 
 ### NPX (If published)
 

@@ -3,8 +3,8 @@ $paths = @()
 $appData = "$env:APPDATA\Telegram Desktop\Telegram.exe"
 if (Test-Path $appData) { $paths += $appData }
 
-$toolsPath = "D:\Data\Tools\Telegram"
-if (Test-Path $toolsPath) {
+$toolsPath = $env:TELEGRAM_TOOLS_DIR  # optional dir with extra portable Telegram installs
+if ($toolsPath -and (Test-Path $toolsPath)) {
     $tools = Get-ChildItem -Path $toolsPath -Recurse -Filter "Telegram.exe" -ErrorAction SilentlyContinue
     if ($tools) {
         foreach ($t in $tools) {

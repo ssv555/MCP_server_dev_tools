@@ -2,7 +2,7 @@
 
 // Import required packages
 const screenshot = require('screenshot-desktop');
-const robot = require('robotjs');
+const robot = require('@jitsi/robotjs');
 const { McpServer, ResourceTemplate } = require("@modelcontextprotocol/sdk/server/mcp.js");
 const { StdioServerTransport } = require("@modelcontextprotocol/sdk/server/stdio.js");
 const { z } = require("zod");

@@ -1,0 +1,9 @@
+{
+    "telegram": {
+        "clients": {
+            "1": "%APPDATA%\Telegram Desktop\Telegram.exe",
+            "2": "C:\path\to\second\Telegram.exe"
+        },
+        "default": 1
+    }
+}

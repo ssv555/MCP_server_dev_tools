@@ -31,8 +31,8 @@ $AppDataPath = "$env:APPDATA\Telegram Desktop\Telegram.exe"
 if (Test-Path $AppDataPath) { $FoundPaths += $AppDataPath }
 
 # 2. Known Tools Directory
-$ToolsDir = "D:\Data\Tools\Telegram"
-if (Test-Path $ToolsDir) {
+$ToolsDir = $env:TELEGRAM_TOOLS_DIR  # optional dir with extra portable Telegram installs
+if ($ToolsDir -and (Test-Path $ToolsDir)) {
     $ExeFiles = Get-ChildItem -Path $ToolsDir -Recurse -Filter "Telegram.exe" -ErrorAction SilentlyContinue
     foreach ($File in $ExeFiles) {
         $FoundPaths += $File.FullName

@@ -1,7 +1,7 @@
 # MCP Desktop Automation
 
 A Model Context Protocol server and toolkit for desktop automation. It provides two main layers of functionality:
-1. **Node.js MCP Server**: General purpose tools for screen capture, mouse/keyboard control.
+1. **MCP Server (Bun)**: General purpose tools for screen capture, mouse/keyboard control.
 2. **PowerShell Scripts**: specialized, robust automation for Telegram Desktop (handling encoding, window focus, etc.).
 
 ## Configuration
@@ -23,7 +23,7 @@ Since you are running this from source (the checkout was moved from usa-ubuntu, 
 }
 ```
 
-On usa-windows `bun install` fails at the native `robotjs@0.6.0` (no Python / Visual Studio C++ Build Tools, no prebuilt binary), and `bun server.js` then stops with `Cannot find module './build/Release/robotjs.node'` (checked 2026-10-07). Install the build tools or replace `robotjs` before using the server there.
+On usa-windows the native module comes from the prebuilt fork `@jitsi/robotjs` (N-API prebuilds for win32-x64 are bundled in the package), so `bun install` needs no Python / Visual Studio Build Tools. The fork replaced the original `robotjs@0.6.0`, which has no prebuilt binary and failed to build there (`Cannot find module './build/Release/robotjs.node'`). The API is identical; only the `require` in `server.js` changed. Bun blocks the fork's `install` script (`node-gyp-build`) as untrusted - that is fine, the prebuilt binary is loaded at runtime.
 
 ### NPX (If published)
 
@@ -48,6 +48,10 @@ This server requires system-level permissions to:
 ## Telegram Automation (PowerShell)
 
 The core automation logic for Telegram resides in the `scripts/` directory. These are optimized for Windows/PowerShell execution.
+
+### Telegram client path
+
+The scripts find `Telegram.exe` in this order: `config.json` (git-ignored, copy `config.example.json`; either `telegram.TelegramPath` or `telegram.clients` + `telegram.default`; `%VAR%` is expanded) -> `%APPDATA%\Telegram Desktop\Telegram.exe` -> the `TELEGRAM_EXE` environment variable. `TELEGRAM_TOOLS_DIR` (optional) is a folder searched recursively for extra portable `Telegram.exe` installs by `list_telegrams.ps1` / `setup_telegram.ps1`. No path is hard-coded; the old `D:\Data\Tools\Telegram` location belonged to the previous machine and does not exist on usa-windows (Telegram Desktop is not installed there as of 2026-10-09).
 
 ### 1. Send Message to Current Chat (`send_telegram_v7.ps1`)
 
@@ -108,7 +112,7 @@ The `server.js` provides the following tools for general automation:
 
 - **OS**: Windows (PowerShell 7+ recommended, but 5.1 works)
 - **Application**: Telegram Desktop installed and logged in.
-- **Node.js**: (>=14.x)
+- **Bun** (>=1.x) to run `server.js`; `@jitsi/robotjs` ships prebuilt binaries, no build tools needed
 
 ## Project Structure
 

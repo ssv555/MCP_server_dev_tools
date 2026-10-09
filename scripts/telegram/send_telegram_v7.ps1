@@ -93,6 +93,7 @@ if (Test-Path $ConfigFile) {
             $defaultKey = "$($Config.default)"
             $TelegramPath = $Config.clients.$defaultKey
         }
+        if ($TelegramPath) { $TelegramPath = [Environment]::ExpandEnvironmentVariables("$TelegramPath") }
         Write-Output "Loaded configuration. Using Telegram at: $TelegramPath"
     } catch {
         Write-Warning "Could not read configuration file."
@@ -110,11 +111,10 @@ if (-not $proc) {
         # Fallback search if no config
         $possiblePaths = @(
             "$env:APPDATA\Telegram Desktop\Telegram.exe",
-            "D:\Data\Tools\Telegram\Telegram +79990711101 - My\Telegram.exe",
-            "D:\Data\Tools\Telegram\Telegram +79660091975 - SOU\Telegram.exe"
+            $env:TELEGRAM_EXE  # optional explicit path to Telegram.exe
         )
         foreach ($path in $possiblePaths) {
-            if (Test-Path $path) {
+            if ($path -and (Test-Path $path)) {
                 $TelegramPath = $path
                 break
             }

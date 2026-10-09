@@ -1,7 +1,7 @@
 # Use official Node.js LTS image based on Debian
 FROM node:20-bullseye
 
-# Install build and X11-related deps needed by native modules like robotjs
+# Build and X11-related deps (kept as a fallback if the @jitsi/robotjs prebuilt binary does not match the image)
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
      build-essential \
